@@ -8,15 +8,43 @@ import (
 	"strconv"
 )
 
+type MinHeap []int
+
+func (h MinHeap) Len() int           { return len(h) }
+func (h MinHeap) Less(i, j int) bool { return h[i] < h[j] }
+func (h MinHeap) Swap(i, j int)      { h[i], h[j] = h[j], h[i] }
+
+func (h *MinHeap) Push(x interface{}) {
+	*h = append(*h, x.(int))
+}
+
+func (h *MinHeap) Pop() interface{} {
+	old := *h
+	n := len(old)
+	x := old[n-1]
+	*h = old[0 : n-1]
+	return x
+}
+
+func (h *MinHeap) Peek() int {
+	heap := *h
+	return heap[0]
+}
+
+// Create our MaxHeap by embedding MinHeap
+type MaxHeap struct {
+	MinHeap
+}
+
+func (h MaxHeap) Less(i, j int) bool { return h.MinHeap[i] > h.MinHeap[j] }
+
 func addNumber(x int, lowers *MaxHeap, highers *MinHeap) {
 	if lowers.Len() == 0 {
 		heap.Push(lowers, x)
 		return
 	}
 
-	highestFromLowers := heap.Pop(lowers).(int)
-	heap.Push(lowers, highestFromLowers)
-	if x < highestFromLowers {
+	if x < lowers.Peek() {
 		heap.Push(lowers, x)
 	} else {
 		heap.Push(highers, x)
@@ -37,20 +65,16 @@ func rebalance(lowers *MaxHeap, highers *MinHeap) {
 
 func findMedian(lowers *MaxHeap, highers *MinHeap) float64 {
 	if lowers.Len() == highers.Len() {
-		low := heap.Pop(lowers).(int)
-		high := heap.Pop(highers).(int)
-		heap.Push(lowers, low)
-		heap.Push(highers, high)
+    low := lowers.Peek()
+    high := highers.Peek()
 		return (float64(low) + float64(high)) / 2.0
 	}
 	if lowers.Len() < highers.Len() {
-		high := heap.Pop(highers).(int)
-		heap.Push(highers, high)
-		return float64(highers.Peek())
+    high := highers.Peek()
+		return float64(high)
 	} else {
-		low := heap.Pop(lowers).(int)
-		heap.Push(lowers, low)
-		return float64(lowers.Peek())
+    low := lowers.Peek()
+		return float64(low)
 	}
 }
 
@@ -78,6 +102,6 @@ func main() {
 		addNumber(x, lowers, highers)
 		rebalance(lowers, highers)
 		median := findMedian(lowers, highers)
-		fmt.Printf("%.2f\n", median)
+		fmt.Printf("%.1f\n", median)
 	}
 }
